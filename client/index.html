@@ -71,6 +71,7 @@
           })
             .done((data) => {
               localStorage.setItem('token_jwt', data.token_jwt)
+              window.location.reload();
             })
             .fail(err => {
               console.log(err)
@@ -179,6 +180,7 @@
 
       function logout() {
         localStorage.removeItem('token_jwt')
+        window.location.reload();
       }
     </script>
   </body>
