@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>HacktivGit</title>
+    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId            : '753312365011096',
+          autoLogAppEvents : true,
+          xfbml            : true,
+          version          : 'v3.1'
+        });
+      };
+    
+      (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+    </script>
+
+    <div class="container">
+      <div class="row">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+          <div class="container">
+            <a class="navbar-brand" href="#">HacktivGit</a>
+            <div class="navbar-right">
+              <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
+              <a href="#" onclick="logout()">Log Out</a>
+              <p>renaldypr</p>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <div class="row row-body ">
+        <div class="col-md-3 box">
+          <h4>Users</h4>
+          <ul style="list-style-type:none">
+            <li onclick="searchByUsername('julianjca')">julianjca</li>
+            <li onclick="searchByUsername('esadeli')">esadeli</li>
+            <li onclick="searchByUsername('ivannsu')">ivannsu</li>          
+            <li onclick="searchByUsername('renaldypr')">renaldypr</li>
+          </ul>
+        </div>
+        <div class="col-md-3 box">
+          <input class="search" type="text" placeholder="Search...">
+          <div class="list"></div>
+        </div>
+        <div class="col-md-6 box" id="test"></div>
+      </div>
+
+    </div>
+    <script>
+      function checkLoginState() {
+        FB.getLoginStatus(function(response) {
+          $.ajax({
+            method: 'post',
+            url: 'http://localhost:3000/login',
+            headers: {
+              token_fb: response.authResponse.accessToken
+            }
+          })
+            .done((data) => {
+              localStorage.setItem('token_jwt', data.token_jwt)
+            })
+            .fail(err => {
+              console.log(err)
+            })
+        });
+      }
+
+      $.ajax({
+        method: 'GET',
+        url: 'http://localhost:3000'
+      })
+        .done(repos => {
+          var starredRepo = repos.data
+          for (let i = 0; i < starredRepo.length; i++) {
+            $( ".list" ).append(
+              `<div class="card-body">
+                <h5 class="card-title">
+                  <a href="#" onclick="showDetails('${starredRepo[i].name}', '${starredRepo[i].description}', '${starredRepo[i].owner.login}')">${starredRepo[i].name}</a>
+                </h5>
+                <p class="card-text">${starredRepo[i].description}</p>
+                <p class="card-text">${starredRepo[i].stargazers_count} stars</p>
+              </div>`
+            )
+          }
+        })
+        .fail(err => {
+          console.log(err)
+        })
+
+      $( ".search" ).keyup(function() {
+        $.ajax({
+          method: 'GET',
+          url: 'http://localhost:3000'
+        })
+          .done(repos => {
+            $( ".list" ).text('')
+            var query = $(this).val();
+            var filter = new RegExp(`${query}`, 'i');
+            for (let i = 0; i < repos.data.length; i++) {
+              console.log(filter)
+              if (filter.test(repos.data[i].name)) {
+                $( ".list" ).append(
+                  `<div class="card-body">
+                    <h5 class="card-title">
+                      <a href="#" onclick="showDetails('${repos.data[i].name}', '${repos.data[i].description}', '${repos.data[i].owner.login}')">${repos.data[i].name}</a>
+                    </h5>
+                    <p class="card-text">${repos.data[i].description}</p>
+                    <p class="card-text">${repos.data[i].stargazers_count} stars</p>
+                  </div>`
+                )
+              }
+            }
+          })
+          .fail(err => {
+            console.log(err)
+          })
+      })
+
+      function searchByUsername(username) {
+        if (localStorage.getItem('token_jwt')) {
+          $.ajax({
+          method: 'GET',
+          url: `http://localhost:3000/${username}`
+        })
+          .done(repos => {
+            $( ".list" ).text('');
+            var starredRepo = repos.data
+            for (let i = 0; i < starredRepo.length; i++) {
+              $( ".list" ).append(
+                `<div class="card-body">
+                  <h5 class="card-title">
+                    <a href="#" onclick="showDetails('${starredRepo[i].name}', '${starredRepo[i].description}', '${starredRepo[i].owner.login}')">${starredRepo[i].name}</a>
+                  </h5>
+                  <p class="card-text">${starredRepo[i].description}</p>
+                  <p class="card-text">${starredRepo[i].stargazers_count} stars</p>
+                </div>`
+              )
+            }
+          })
+          .fail(err => {
+            console.log(err)
+          })
+        } else {
+          $( ".list" ).text('You must login to access this feature!');
+        }
+
+      }
+
+      function showDetails(title, desc, owner) {
+        console.log(title, desc, owner)
+        $( "#test" ).text('')
+        $( "#test" ).append(
+          `<h1>${title}</h1>
+
+          <p class="lead">
+            by
+            <a href="#">${owner}</a>
+          </p>
+
+          <hr>
+
+          <p class="lead">${desc}</p>
+          `
+        )
+      }
+
+      function logout() {
+        localStorage.removeItem('token_jwt')
+      }
+    </script>
+  </body>
+</html>
